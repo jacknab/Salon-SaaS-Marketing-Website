@@ -114,6 +114,51 @@
     radial-gradient(circle at 88% 18%, rgba(232, 74, 91, .82), transparent 38%),
     linear-gradient(118deg, #4d3297 0%, #a44798 45%, #df5057 100%);
 }
+.business-page-barber {
+  --barber-ink: #102a43;
+  --barber-navy: #102a43;
+  --barber-blue: #1d4057;
+  --barber-cream: #f5efe6;
+  --barber-sand: #e5ddd1;
+  --barber-copper: #b96f46;
+  --barber-sage: #8ea89a;
+  background: var(--barber-cream) !important;
+  color: var(--barber-ink);
+}
+.business-page-barber header { background: var(--barber-cream); }
+.business-page-barber .business-page-hero {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(142, 168, 154, .42), transparent 32%),
+    radial-gradient(circle at 88% 14%, rgba(185, 111, 70, .54), transparent 35%),
+    linear-gradient(118deg, #102a43 0%, #1d4057 58%, #31566b 100%);
+}
+.business-page-barber .hero-orb-one { background: rgba(245, 239, 230, .18); }
+.business-page-barber .hero-orb-two { border-color: rgba(245, 239, 230, .24); }
+.business-page-barber .business-page-hero button:first-of-type,
+.business-page-barber [data-testid="button-business-final-trial"] {
+  background: var(--barber-copper) !important;
+}
+.business-page-barber [class*="text-[#292328]"] { color: var(--barber-ink) !important; }
+.business-page-barber [class*="text-[#ed5a52]"] { color: var(--barber-copper) !important; }
+.business-page-barber [class*="bg-[#ed5a52]"] { background: var(--barber-copper) !important; }
+.business-page-barber [class*="border-[#292328]"] { border-color: rgba(16, 42, 67, .2) !important; }
+.business-page-barber [class*="bg-[#fffaf7]"] { background: var(--barber-cream) !important; }
+.business-page-barber .business-difference-section { background: var(--barber-sand); }
+.business-page-barber .business-client-section,
+.business-page-barber .business-footer { background: var(--barber-navy) !important; }
+.business-page-barber .client-ui {
+  background: var(--barber-blue);
+  box-shadow: 22px 22px 0 rgba(185, 111, 70, .24);
+}
+.business-page-barber .client-ui .bg-\[\#9bb895\] { background: var(--barber-sage); }
+.business-page-barber .closing-gradient {
+  background:
+    radial-gradient(circle at 86% 15%, rgba(142, 168, 154, .32), transparent 27%),
+    linear-gradient(120deg, #102a43, #1d4057 58%, #b96f46);
+}
+.business-page-barber .closing-ring { border-color: rgba(245, 239, 230, .13); }
+.business-page-barber .business-footer .text-white\/55,
+.business-page-barber .business-footer .text-white\/65 { color: rgba(245, 239, 230, .62); }
 .business-image-trio img {
   border-radius: 1rem;
   box-shadow: 0 18px 42px rgba(54, 18, 39, .22);

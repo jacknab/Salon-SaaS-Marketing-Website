@@ -618,7 +618,7 @@ function BusinessTypePage({ businessItem, group }: { businessItem: BusinessItem;
   const demo = () => setModal('demo');
 
   return (
-    <div className="min-h-[100dvh] overflow-x-hidden bg-[#fffaf7] text-[#292328]">
+    <div className={`business-page min-h-[100dvh] overflow-x-hidden bg-[#fffaf7] text-[#292328] ${businessItem.slug === 'barber' ? 'business-page-barber' : ''}`} data-business-type={businessItem.slug}>
       <div className="promo-bar flex min-h-9 items-center justify-center gap-3 bg-[#292328] px-4 py-2 text-center text-[11px] font-semibold text-white sm:text-xs"><span className="hidden text-white/45 sm:inline line-through">$49</span><span>$39/month for your first 3 months</span><span className="hidden text-white/60 sm:inline">·</span><span className="hidden text-white/60 sm:inline">We’ll make the switch easy.</span><button onClick={trial} className="focus-ring rounded-full bg-[#ed5a52] px-3 py-1 text-[10px] font-bold hover:bg-[#f37969]" data-testid="button-promo-trial">Try for free <ArrowRight className="ml-1 inline" size={11} /></button></div>
       <SiteHeader onTrial={trial} onDemo={demo} />
 
@@ -647,7 +647,7 @@ function BusinessTypePage({ businessItem, group }: { businessItem: BusinessItem;
           </div>
         </section>
 
-        <section className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
+        <section className="business-overview-section px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
           <div className="mx-auto grid max-w-[1100px] gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
             <Reveal>
               <span className="eyebrow text-[#ed5a52]">Built around your work</span>
@@ -660,31 +660,31 @@ function BusinessTypePage({ businessItem, group }: { businessItem: BusinessItem;
           </div>
         </section>
 
-        <section className="bg-[#f2e8e6] px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
+        <section className="business-difference-section bg-[#f2e8e6] px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
           <div className="mx-auto max-w-[1100px]">
             <Reveal><span className="eyebrow text-[#ed5a52]">The MUSE difference</span><h2 className="serif mt-5 max-w-[700px] text-5xl leading-[.9] sm:text-6xl">The details are easier when everything is <em>in one place.</em></h2></Reveal>
             <div className="mt-12 grid gap-4 md:grid-cols-3">{content.features.map(([title, copy], index) => <Reveal key={title} delay={index + 1}><article className="min-h-[255px] border border-[#292328]/15 bg-[#fffaf7] p-6"><span className="font-mono text-3xl text-[#ed5a52]">0{index + 1}</span><h3 className="mt-12 text-xl font-bold">{title}</h3><p className="mt-3 text-sm leading-6 text-[#292328]/60">{copy}</p></article></Reveal>)}</div>
           </div>
         </section>
 
-        <section className="bg-[#292328] px-5 py-20 text-white sm:px-8 sm:py-28 lg:px-10">
+        <section className="business-client-section bg-[#292328] px-5 py-20 text-white sm:px-8 sm:py-28 lg:px-10">
           <div className="mx-auto grid max-w-[1100px] gap-12 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
             <Reveal><div className="client-ui max-w-[600px] bg-[#4a3943] p-6 sm:p-8"><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="eyebrow text-white/50">{businessItem.label} / client experience</span><Heart size={18} className="text-[#f4c9bd]" /></div><div className="mt-6 flex items-center gap-3 border-b border-white/10 pb-5"><div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e9bcae] text-xs font-bold text-[#292328]">LM</div><div><p className="text-sm font-bold">Lila Morgan</p><p className="text-xs text-white/50">Next visit · Thursday at 2:15</p></div><span className="ml-auto rounded-full bg-[#9bb895] px-2 py-1 text-[9px] font-bold text-[#292328]">Returning</span></div><div className="mt-5 grid grid-cols-3 gap-2 text-center"><div className="bg-white/5 p-3"><p className="font-mono text-xl text-[#f4c9bd]">14</p><p className="mt-1 text-[9px] text-white/45">visits</p></div><div className="bg-white/5 p-3"><p className="font-mono text-xl text-[#f4c9bd]">$1.8k</p><p className="mt-1 text-[9px] text-white/45">lifetime value</p></div><div className="bg-white/5 p-3"><p className="font-mono text-xl text-[#f4c9bd]">4.9</p><p className="mt-1 text-[9px] text-white/45">review score</p></div></div></div></Reveal>
             <Reveal delay={1}><span className="eyebrow text-[#f4c9bd]">Made for the people who come back</span><blockquote className="serif mt-5 max-w-[520px] text-4xl leading-[.95] sm:text-5xl">“{content.testimonial}”</blockquote><p className="mt-7 text-sm text-white/55">{content.persona}</p></Reveal>
           </div>
         </section>
 
-        <section className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
+        <section className="business-related-section px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
           <div className="mx-auto max-w-[1100px]">
             <Reveal><div className="flex flex-col justify-between gap-5 border-b border-[#292328]/15 pb-8 sm:flex-row sm:items-end"><div><span className="eyebrow text-[#ed5a52]">You might also like</span><h2 className="serif mt-5 text-5xl leading-[.9] sm:text-6xl">More ways to make work <em>feel lighter.</em></h2></div><a href={homeHash('#pricing')} className="focus-ring inline-flex items-center gap-2 text-sm font-bold text-[#ed5a52]">See pricing <ArrowRight size={16} /></a></div></Reveal>
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{related.map((item, index) => <Reveal key={item.slug} delay={index + 1}><a href={businessRoute(item.slug)} className="focus-ring group flex items-center justify-between border border-[#292328]/15 p-4 transition hover:-translate-y-1 hover:border-[#ed5a52]" data-testid={`link-related-${item.slug}`}><span><span className="eyebrow block text-[#ed5a52]">{group.label}</span><span className="mt-2 block text-sm font-bold">{item.label}</span></span><ArrowUpRight size={16} className="text-[#292328]/40 transition group-hover:text-[#ed5a52]" /></a></Reveal>)}</div>
           </div>
         </section>
 
-        <section className="closing-gradient relative overflow-hidden px-5 py-24 text-white sm:px-8 sm:py-32 lg:px-10"><div className="closing-ring" /><div className="relative mx-auto max-w-[900px] text-center"><Reveal><span className="eyebrow text-white/70">A clearer way to grow</span><h2 className="serif mt-5 text-6xl leading-[.86] tracking-[-.03em] sm:text-8xl">Run a {businessItem.label.toLowerCase()} business that feels as good as it looks.</h2><p className="mx-auto mt-7 max-w-[470px] text-sm leading-6 text-white/75">Start with the tools that make your best work easier to book, sell, and remember.</p><div className="mt-8 flex flex-wrap justify-center gap-3"><CTA onClick={trial} variant="light" testId="button-business-final-trial">Start free trial <ArrowRight size={16} /></CTA><button onClick={demo} className="focus-ring rounded-full border border-white/45 px-5 py-3 text-sm font-bold hover:bg-white hover:text-[#292328]" data-testid="button-business-final-demo">Book a demo</button></div></Reveal></div></section>
+        <section className="business-closing-section closing-gradient relative overflow-hidden px-5 py-24 text-white sm:px-8 sm:py-32 lg:px-10"><div className="closing-ring" /><div className="relative mx-auto max-w-[900px] text-center"><Reveal><span className="eyebrow text-white/70">A clearer way to grow</span><h2 className="serif mt-5 text-6xl leading-[.86] tracking-[-.03em] sm:text-8xl">Run a {businessItem.label.toLowerCase()} business that feels as good as it looks.</h2><p className="mx-auto mt-7 max-w-[470px] text-sm leading-6 text-white/75">Start with the tools that make your best work easier to book, sell, and remember.</p><div className="mt-8 flex flex-wrap justify-center gap-3"><CTA onClick={trial} variant="light" testId="button-business-final-trial">Start free trial <ArrowRight size={16} /></CTA><button onClick={demo} className="focus-ring rounded-full border border-white/45 px-5 py-3 text-sm font-bold hover:bg-white hover:text-[#292328]" data-testid="button-business-final-demo">Book a demo</button></div></Reveal></div></section>
       </main>
 
-      <footer className="bg-[#292328] px-5 py-12 text-white sm:px-8 lg:px-10"><div className="mx-auto max-w-[1100px]"><div className="flex flex-col justify-between gap-8 border-b border-white/15 pb-8 md:flex-row"><div><Logo light /><p className="mt-5 max-w-[240px] text-sm leading-6 text-white/55">The complete business platform for ambitious beauty, wellness, and fitness professionals.</p></div><div className="grid grid-cols-2 gap-x-14 gap-y-5 text-sm text-white/65"><a href={homeHash('#overview')} className="hover:text-white">Product overview</a><a href={homeHash('#pricing')} className="hover:text-white">Pricing</a><a href={businessRoute('salon')} className="hover:text-white">Salon software</a><button onClick={demo} className="text-left hover:text-white" data-testid="button-business-footer-contact">Contact</button></div></div><div className="flex flex-col justify-between gap-3 pt-6 text-[11px] text-white/35 sm:flex-row"><span>© 2025 MUSE Technologies, Inc.</span><span>Made for the detail-obsessed.</span></div></div></footer>
+      <footer className="business-footer bg-[#292328] px-5 py-12 text-white sm:px-8 lg:px-10"><div className="mx-auto max-w-[1100px]"><div className="flex flex-col justify-between gap-8 border-b border-white/15 pb-8 md:flex-row"><div><Logo light /><p className="mt-5 max-w-[240px] text-sm leading-6 text-white/55">The complete business platform for ambitious beauty, wellness, and fitness professionals.</p></div><div className="grid grid-cols-2 gap-x-14 gap-y-5 text-sm text-white/65"><a href={homeHash('#overview')} className="hover:text-white">Product overview</a><a href={homeHash('#pricing')} className="hover:text-white">Pricing</a><a href={businessRoute('salon')} className="hover:text-white">Salon software</a><button onClick={demo} className="text-left hover:text-white" data-testid="button-business-footer-contact">Contact</button></div></div><div className="flex flex-col justify-between gap-3 pt-6 text-[11px] text-white/35 sm:flex-row"><span>© 2025 MUSE Technologies, Inc.</span><span>Made for the detail-obsessed.</span></div></div></footer>
       <ConversionModal mode={modal} onClose={() => setModal(null)} />
     </div>
   );
