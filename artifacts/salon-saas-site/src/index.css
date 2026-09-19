@@ -108,6 +108,18 @@
 .hero-media > img { height: 100%; width: 100%; object-fit: cover; object-position: center; border-radius: 1.25rem; box-shadow: 0 25px 75px rgba(54, 18, 39, .3); }
 .hero-panel { transform: rotate(-3deg); }
 .hero-stat { transform: rotate(3deg); }
+.business-page-hero {
+  background:
+    radial-gradient(circle at 12% 20%, rgba(190, 91, 219, .72), transparent 33%),
+    radial-gradient(circle at 88% 18%, rgba(232, 74, 91, .82), transparent 38%),
+    linear-gradient(118deg, #4d3297 0%, #a44798 45%, #df5057 100%);
+}
+.business-image-trio img {
+  border-radius: 1rem;
+  box-shadow: 0 18px 42px rgba(54, 18, 39, .22);
+}
+.business-image-trio img:nth-child(2) { transform: translateY(16px); }
+.business-image-trio img:nth-child(3) { transform: translateY(32px); }
 .mega-menu { position: absolute; top: 100%; left: 0; right: 0; border-top: 1px solid rgba(41, 35, 40, .1); background: rgba(255, 255, 255, .98); box-shadow: 0 24px 48px rgba(41, 35, 40, .14); animation: menu-drop .2s ease-out both; }
 .mega-menu-inner { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 42px; max-width: 1280px; margin: 0 auto; padding: 28px 40px 34px; }
 .mega-menu-group { min-width: 0; }
@@ -140,6 +152,8 @@
   .hero-panel { left: -4%; width: 82%; }
   .payment-card { right: 4%; width: 190px; }
   .client-ui { box-shadow: 12px 12px 0 rgba(237, 90, 82, .18); }
+  .business-image-trio img:nth-child(2),
+  .business-image-trio img:nth-child(3) { transform: none; }
   .mega-menu-inner { padding-left: 20px; padding-right: 20px; }
 }
 @media (max-width: 1023px) {
