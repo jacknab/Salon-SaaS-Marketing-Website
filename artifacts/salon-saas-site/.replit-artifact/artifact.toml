@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Salon SaaS Website"
+description = "A premium marketing website for an all-in-one salon SaaS platform covering booking, payments, POS, reviews, client management, loyalty, and SMS marketing."
+version = "1.0.0"
+id = "artifacts/salon-saas-site"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19288
+
+[services.development]
+run = "pnpm --filter @workspace/salon-saas-site run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/salon-saas-site", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/salon-saas-site/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19288"
+BASE_PATH = "/"
