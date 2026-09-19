@@ -31,6 +31,24 @@ const topNav = [
   { label: 'Pricing', href: '#pricing' },
 ];
 
+const businessGroups = [
+  {
+    label: 'Beauty',
+    icon: Scissors,
+    items: ['Booth renter', 'Salon', 'Brow & lash', 'Barber', 'Nail', 'Hair removal', 'Makeup', 'Tanning', 'Tattoo', 'Pet grooming'],
+  },
+  {
+    label: 'Wellness',
+    icon: Heart,
+    items: ['Spa', 'Aesthetic clinic', 'Med spa', 'Weight loss clinic', 'Massage', 'Acupuncture', 'Chiropractor', 'Mental health', 'Nutritionist', 'Coaching', 'Physical therapy'],
+  },
+  {
+    label: 'Fitness',
+    icon: BarChart3,
+    items: ['Yoga', 'Gym', 'Personal trainer', 'Martial arts', 'Pilates', 'Barre studio', 'Cross training', 'Cycling', 'Dance studio'],
+  },
+];
+
 const faqs = [
   ['Is MUSE built for independent professionals or full teams?', 'Both. Start as a one-chair studio and invite your first teammate when the time is right. MUSE keeps permissions, calendars, payouts, and client records clear as your business grows.'],
   ['Can I bring my existing clients and calendar?', 'Absolutely. Our concierge onboarding team helps you import your client list, services, and availability so you can open your doors without starting from scratch.'],
@@ -112,30 +130,95 @@ function HeroProductPanel() {
   );
 }
 
+function BusinessTypesMenu({ mobile = false, onSelect }: { mobile?: boolean; onSelect: () => void }) {
+  return (
+    <div className={`mega-menu ${mobile ? 'mega-menu-mobile' : ''}`} data-testid="menu-business-types">
+      <div className="mega-menu-inner">
+        {businessGroups.map((group) => {
+          const GroupIcon = group.icon;
+          return (
+            <section key={group.label} className="mega-menu-group">
+              <div className="mega-menu-heading">
+                <span className="mega-menu-heading-icon"><GroupIcon size={13} /></span>
+                <span>{group.label}</span>
+                <span className="mega-menu-heading-line" />
+              </div>
+              <div className="mega-menu-list">
+                {group.items.map((item) => (
+                  <a
+                    href="#overview"
+                    key={item}
+                    onClick={onSelect}
+                    className="mega-menu-item focus-ring"
+                    data-testid={`link-business-${item.toLowerCase().replaceAll(' ', '-')}`}
+                  >
+                    <span className="mega-menu-item-icon">{item.slice(0, 1)}</span>
+                    <span>{item}</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [businessMenuOpen, setBusinessMenuOpen] = useState(false);
   const [modal, setModal] = useState<ModalMode>(null);
   const [openFaq, setOpenFaq] = useState(0);
   const [annual, setAnnual] = useState(false);
+  const businessMenuRef = useRef<HTMLElement>(null);
 
-  const trial = () => { setMenuOpen(false); setModal('trial'); };
-  const demo = () => { setMenuOpen(false); setModal('demo'); };
+  useEffect(() => {
+    if (!businessMenuOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!businessMenuRef.current?.contains(event.target as Node)) setBusinessMenuOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setBusinessMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [businessMenuOpen]);
+
+  const trial = () => { setMenuOpen(false); setBusinessMenuOpen(false); setModal('trial'); };
+  const demo = () => { setMenuOpen(false); setBusinessMenuOpen(false); setModal('demo'); };
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-[#fffaf7] text-[#292328]">
       <div className="promo-bar flex min-h-9 items-center justify-center gap-3 bg-[#292328] px-4 py-2 text-center text-[11px] font-semibold text-white sm:text-xs"><span className="hidden text-white/45 sm:inline line-through">$49</span><span>$39/month for your first 3 months</span><span className="hidden text-white/60 sm:inline">·</span><span className="hidden text-white/60 sm:inline">We’ll make the switch easy.</span><button onClick={trial} className="focus-ring rounded-full bg-[#ed5a52] px-3 py-1 text-[10px] font-bold hover:bg-[#f37969]" data-testid="button-promo-trial">Try for free <ArrowRight className="ml-1 inline" size={11} /></button></div>
 
-      <header className="relative z-30 bg-white">
+      <header ref={businessMenuRef} className="relative z-30 bg-white">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between border-b border-[#292328]/10 px-5 py-4 sm:px-8 lg:px-10">
           <Logo />
           <div className="hidden items-center gap-5 text-xs font-semibold md:flex"><a href="#stories" className="focus-ring text-[#292328]/60 hover:text-[#292328]" data-testid="link-header-sales">Talk to sales</a><a href="#faq" className="focus-ring text-[#292328]/60 hover:text-[#292328]" data-testid="link-header-help">Help center</a><button onClick={demo} className="focus-ring text-[#292328]/75 hover:text-[#ed5a52]" data-testid="button-header-login">Log in</button><CTA onClick={trial} variant="coral" testId="button-header-trial" className="px-4 py-2.5 text-xs">Start free trial</CTA></div>
           <button onClick={() => setMenuOpen(!menuOpen)} className="focus-ring rounded-full border border-[#292328]/15 p-2 md:hidden" aria-label="Toggle menu" data-testid="button-mobile-menu">{menuOpen ? <X size={18} /> : <Menu size={18} />}</button>
         </div>
         <div className="mx-auto hidden max-w-[1440px] items-center justify-between px-5 py-3 sm:px-8 lg:flex lg:px-10">
-          <nav className="flex items-center gap-7" aria-label="Product navigation">{topNav.map((item) => <a href={item.href} className="focus-ring text-[11px] font-semibold text-[#292328]/65 transition hover:text-[#ed5a52]" key={item.href} data-testid={`link-nav-${item.label.toLowerCase().replaceAll(' ', '-')}`}>{item.label}</a>)}</nav>
+          <nav className="flex items-center gap-7" aria-label="Product navigation">
+            <button
+              onClick={() => setBusinessMenuOpen(!businessMenuOpen)}
+              className={`focus-ring inline-flex items-center gap-1 text-[11px] font-semibold transition ${businessMenuOpen ? 'text-[#ed5a52]' : 'text-[#292328]/65 hover:text-[#ed5a52]'}`}
+              aria-expanded={businessMenuOpen}
+              aria-haspopup="true"
+              data-testid="button-business-types"
+            >
+              Business types <ChevronDown size={13} className={`transition-transform ${businessMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {topNav.map((item) => <a href={item.href} className="focus-ring text-[11px] font-semibold text-[#292328]/65 transition hover:text-[#ed5a52]" key={item.href} data-testid={`link-nav-${item.label.toLowerCase().replaceAll(' ', '-')}`}>{item.label}</a>)}
+          </nav>
           <div className="flex items-center gap-2 text-[11px] text-[#292328]/45"><span>For beauty businesses</span><Search size={14} /></div>
         </div>
-        {menuOpen && <div className="border-t border-[#292328]/10 bg-white px-5 py-4 md:hidden" data-testid="menu-mobile"><nav className="flex flex-col">{topNav.map((item) => <a href={item.href} onClick={() => setMenuOpen(false)} key={item.href} className="border-b border-[#292328]/10 py-3 text-sm font-semibold" data-testid={`link-mobile-${item.label.toLowerCase().replaceAll(' ', '-')}`}>{item.label}</a>)}</nav><div className="grid grid-cols-2 gap-2 pt-4"><button onClick={demo} className="rounded-full border border-[#292328]/20 px-3 py-3 text-xs font-bold" data-testid="button-mobile-login">Log in</button><button onClick={trial} className="rounded-full bg-[#ed5a52] px-3 py-3 text-xs font-bold text-white" data-testid="button-mobile-trial">Start free trial</button></div></div>}
+        {businessMenuOpen && <BusinessTypesMenu onSelect={() => setBusinessMenuOpen(false)} />}
+        {menuOpen && <div className="border-t border-[#292328]/10 bg-white px-5 py-4 md:hidden" data-testid="menu-mobile"><nav className="flex flex-col"><button onClick={() => setBusinessMenuOpen(!businessMenuOpen)} className="flex items-center justify-between border-b border-[#292328]/10 py-3 text-left text-sm font-semibold" aria-expanded={businessMenuOpen} data-testid="button-mobile-business-types">Business types <ChevronDown size={16} className={`transition-transform ${businessMenuOpen ? 'rotate-180 text-[#ed5a52]' : ''}`} /></button>{businessMenuOpen && <BusinessTypesMenu mobile onSelect={() => { setBusinessMenuOpen(false); setMenuOpen(false); }} />}{topNav.map((item) => <a href={item.href} onClick={() => setMenuOpen(false)} key={item.href} className="border-b border-[#292328]/10 py-3 text-sm font-semibold" data-testid={`link-mobile-${item.label.toLowerCase().replaceAll(' ', '-')}`}>{item.label}</a>)}</nav><div className="grid grid-cols-2 gap-2 pt-4"><button onClick={demo} className="rounded-full border border-[#292328]/20 px-3 py-3 text-xs font-bold" data-testid="button-mobile-login">Log in</button><button onClick={trial} className="rounded-full bg-[#ed5a52] px-3 py-3 text-xs font-bold text-white" data-testid="button-mobile-trial">Start free trial</button></div></div>}
       </header>
 
       <main>
