@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -57,6 +57,66 @@ const siteBaseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BAS
 const businessRoute = (slug: string) => `${siteBaseUrl}pro/${slug}-software`;
 const homeHash = (hash: string) => `${siteBaseUrl}${hash}`;
 const business = (label: string, slug: string): BusinessItem => ({ label, slug });
+
+type PageMetadata = {
+  title: string;
+  description: string;
+  path: string;
+};
+
+const homeMetadata: PageMetadata = {
+  title: 'MUSE | The business platform for salons, spas, and studios',
+  description: 'MUSE brings booking, payments, client care, and growth into one calm platform for beauty, wellness, and fitness businesses.',
+  path: siteBaseUrl,
+};
+
+function usePageMetadata(metadata: PageMetadata) {
+  useEffect(() => {
+    const previousTitle = document.title;
+    const canonicalUrl = new URL(metadata.path, window.location.origin).href;
+    const entries = [
+      { selector: 'meta[name="description"]', attribute: 'name', value: 'description', content: metadata.description },
+      { selector: 'meta[property="og:title"]', attribute: 'property', value: 'og:title', content: metadata.title },
+      { selector: 'meta[property="og:description"]', attribute: 'property', value: 'og:description', content: metadata.description },
+      { selector: 'meta[property="og:url"]', attribute: 'property', value: 'og:url', content: canonicalUrl },
+      { selector: 'meta[name="twitter:title"]', attribute: 'name', value: 'twitter:title', content: metadata.title },
+      { selector: 'meta[name="twitter:description"]', attribute: 'name', value: 'twitter:description', content: metadata.description },
+    ];
+    const previous = entries.map((entry) => {
+      const element = document.querySelector<HTMLMetaElement>(entry.selector);
+      return { ...entry, element, previousContent: element?.getAttribute('content') };
+    });
+    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    const previousCanonical = canonical?.getAttribute('href');
+    const canonicalElement = canonical ?? Object.assign(document.createElement('link'), { rel: 'canonical' });
+    if (!canonical) document.head.appendChild(canonicalElement);
+
+    document.title = metadata.title;
+    previous.forEach((entry) => {
+      const element = entry.element ?? Object.assign(document.createElement('meta'), { [entry.attribute]: entry.value });
+      if (!entry.element) document.head.appendChild(element);
+      element.setAttribute('content', entry.content);
+    });
+    canonicalElement.setAttribute('href', canonicalUrl);
+
+    return () => {
+      document.title = previousTitle;
+      previous.forEach((entry) => {
+        if (entry.element && entry.previousContent !== null && entry.previousContent !== undefined) {
+          entry.element.setAttribute('content', entry.previousContent);
+        } else if (entry.element) {
+          entry.element.remove();
+        }
+      });
+      if (canonical) {
+        if (previousCanonical) canonical.setAttribute('href', previousCanonical);
+        else canonical.removeAttribute('href');
+      } else {
+        canonicalElement.remove();
+      }
+    };
+  }, [metadata.description, metadata.path, metadata.title]);
+}
 
 const businessGroups: BusinessGroup[] = [
   {
@@ -451,32 +511,106 @@ function Logo({ light = false }: { light?: boolean }) {
   );
 }
 
-function CTA({ children, onClick, variant = 'dark', testId, className = '' }: { children: ReactNode; onClick?: () => void; variant?: 'dark' | 'light' | 'coral' | 'outline'; testId: string; className?: string }) {
+function CTA({ children, onClick, variant = 'dark', testId, className = '', type = 'button' }: { children: ReactNode; onClick?: () => void; variant?: 'dark' | 'light' | 'coral' | 'outline'; testId: string; className?: string; type?: 'button' | 'submit' }) {
   const styles = {
     dark: 'bg-[#292328] text-white hover:bg-[#44343d]',
     light: 'bg-white text-[#292328] hover:bg-[#fff4ef]',
     coral: 'bg-[#ed5a52] text-white hover:bg-[#db494b]',
     outline: 'border border-current text-[#292328] hover:bg-[#292328] hover:text-white',
   };
-  return <button onClick={onClick} className={`focus-ring inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition-all duration-300 hover:-translate-y-0.5 ${styles[variant]} ${className}`} data-testid={testId}>{children}</button>;
+  return <button type={type} onClick={onClick} className={`focus-ring inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition-all duration-300 hover:-translate-y-0.5 ${styles[variant]} ${className}`} data-testid={testId}>{children}</button>;
 }
 
 function ConversionModal({ mode, onClose }: { mode: ModalMode; onClose: () => void }) {
   const [sent, setSent] = useState(false);
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const successTitleRef = useRef<HTMLHeadingElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
-    if (!mode) { setSent(false); setEmail(''); }
+    if (!mode) {
+      setSent(false);
+      setEmail('');
+      setEmailError('');
+      return;
+    }
+
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusDialog = () => closeRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      ));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    const frame = window.requestAnimationFrame(focusDialog);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      const opener = openerRef.current;
+      if (opener?.isConnected) window.requestAnimationFrame(() => opener.focus());
+      openerRef.current = null;
+    };
   }, [mode]);
+
+  useEffect(() => {
+    if (!mode || !sent) return;
+    const frame = window.requestAnimationFrame(() => successTitleRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [mode, sent]);
+
   if (!mode) return null;
   const demo = mode === 'demo';
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setEmailError('Enter your work email.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setEmailError('Enter a valid email address, such as you@yourstudio.com.');
+      return;
+    }
+    setEmailError('');
+    setSent(true);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#292328]/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" data-testid="modal-conversion">
-      <div className="relative w-full max-w-md rounded-3xl bg-[#fffaf7] p-7 shadow-2xl sm:p-10">
-        <button onClick={onClose} className="focus-ring absolute right-5 top-5 rounded-full p-2 text-[#292328]/50 hover:bg-[#292328]/10" aria-label="Close" data-testid="button-close-modal"><X size={19} /></button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-[#292328]/65 p-4 backdrop-blur-sm" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }} data-testid="modal-conversion">
+      <div ref={dialogRef} className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-3xl bg-[#fffaf7] p-7 shadow-2xl sm:p-10" role="dialog" aria-modal="true" aria-labelledby="conversion-dialog-title" aria-describedby="conversion-dialog-description" tabIndex={-1}>
+        <button ref={closeRef} type="button" onClick={onClose} className="focus-ring absolute right-5 top-5 rounded-full p-2 text-[#292328]/50 hover:bg-[#292328]/10" aria-label="Close dialog" data-testid="button-close-modal"><X size={19} /></button>
         {sent ? (
-          <div className="py-5 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#dbe8dc] text-[#3b754b]"><CircleCheck size={28} /></div><h2 className="serif mt-6 text-4xl">{demo ? 'We’ll be in touch.' : 'You’re on your way.'}</h2><p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-[#292328]/65">{demo ? 'A MUSE guide will send a few times to your inbox shortly.' : 'Check your inbox for a welcome note and your first step toward a calmer studio.'}</p><CTA onClick={onClose} testId="button-close-success" className="mt-7">Back to MUSE</CTA></div>
+          <div className="py-5 text-center" role="status" aria-live="polite"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#dbe8dc] text-[#3b754b]"><CircleCheck size={28} aria-hidden="true" /></div><h2 ref={successTitleRef} tabIndex={-1} id="conversion-dialog-title" className="serif mt-6 text-4xl">{demo ? 'We’ll be in touch.' : 'You’re on your way.'}</h2><p id="conversion-dialog-description" className="mx-auto mt-3 max-w-xs text-sm leading-6 text-[#292328]/65">{demo ? 'A MUSE guide will send a few times to your inbox shortly.' : 'Check your inbox for a welcome note and your first step toward a calmer studio.'}</p><CTA onClick={onClose} testId="button-close-success" className="mt-7">Back to MUSE</CTA></div>
         ) : (
-          <><span className="eyebrow text-[#ed5a52]">{demo ? 'A closer look' : '14 days on us'}</span><h2 className="serif mt-4 max-w-sm text-4xl leading-[.93]">{demo ? 'Let’s make space for what matters.' : 'Your best business day starts here.'}</h2><p className="mt-4 text-sm leading-6 text-[#292328]/65">{demo ? 'Tell us where you are in your studio journey and a MUSE guide will walk you through the details.' : 'No card. No awkward setup. Just two generous weeks to see how MUSE feels in your hands.'}</p><form onSubmit={(event) => { event.preventDefault(); if (email.trim()) setSent(true); }} className="mt-7"><label htmlFor="modal-email" className="eyebrow text-[#292328]/50">Work email</label><input id="modal-email" required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@yourstudio.com" className="focus-ring mt-2 w-full rounded-xl border border-[#292328]/15 bg-white px-4 py-3.5 text-sm outline-none focus:border-[#ed5a52]" data-testid="input-modal-email" /><CTA variant="coral" testId="button-submit-modal" className="mt-3 w-full">{demo ? 'Request my demo' : 'Start my free trial'} <ArrowRight size={16} /></CTA></form><p className="mt-4 text-center text-[11px] text-[#292328]/45">No credit card required.</p></>
+          <><span className="eyebrow text-[#ed5a52]">{demo ? 'A closer look' : '14 days on us'}</span><h2 id="conversion-dialog-title" className="serif mt-4 max-w-sm text-4xl leading-[.93]">{demo ? 'Let’s make space for what matters.' : 'Your best business day starts here.'}</h2><p id="conversion-dialog-description" className="mt-4 text-sm leading-6 text-[#292328]/65">{demo ? 'Tell us where you are in your studio journey and a MUSE guide will walk you through the details.' : 'No card. No awkward setup. Just two generous weeks to see how MUSE feels in your hands.'}</p><form onSubmit={handleSubmit} noValidate className="mt-7" aria-live="polite"><label htmlFor="modal-email" className="eyebrow text-[#292328]/50">Work email</label><input id="modal-email" required type="email" value={email} onChange={(event) => { setEmail(event.target.value); if (emailError) setEmailError(''); }} aria-invalid={emailError ? 'true' : 'false'} aria-describedby={emailError ? 'modal-email-error' : 'modal-email-help'} placeholder="you@yourstudio.com" className="focus-ring mt-2 w-full rounded-xl border border-[#292328]/15 bg-white px-4 py-3.5 text-sm outline-none focus:border-[#ed5a52]" data-testid="input-modal-email" />{emailError ? <p id="modal-email-error" className="mt-2 text-xs font-semibold text-[#b23b3b]" role="alert">{emailError}</p> : <p id="modal-email-help" className="sr-only">Enter a work email address to continue.</p>}<CTA type="submit" variant="coral" testId="button-submit-modal" className="mt-3 w-full">{demo ? 'Request my demo' : 'Start my free trial'} <ArrowRight size={16} /></CTA></form><p className="mt-4 text-center text-[11px] text-[#292328]/45">No credit card required.</p></>
         )}
       </div>
     </div>
@@ -559,9 +693,9 @@ function SiteHeader({ onTrial, onDemo }: { onTrial: () => void; onDemo: () => vo
       <div className="mx-auto flex max-w-[1440px] items-center justify-between border-b border-[#292328]/10 px-5 py-4 sm:px-8 lg:px-10">
         <Logo />
         <div className="hidden items-center gap-5 text-xs font-semibold md:flex">
-          <a href={homeHash('#stories')} className="focus-ring text-[#292328]/60 hover:text-[#292328]" data-testid="link-header-sales">Talk to sales</a>
-          <a href={homeHash('#faq')} className="focus-ring text-[#292328]/60 hover:text-[#292328]" data-testid="link-header-help">Help center</a>
-          <button onClick={onDemo} className="focus-ring text-[#292328]/75 hover:text-[#ed5a52]" data-testid="button-header-login">Log in</button>
+          <a href={homeHash('#stories')} className="focus-ring text-[#292328]/60 hover:text-[#292328]" data-testid="link-header-stories">Customer stories</a>
+          <a href={homeHash('#faq')} className="focus-ring text-[#292328]/60 hover:text-[#292328]" data-testid="link-header-faq">FAQs</a>
+          <button onClick={onDemo} className="focus-ring text-[#292328]/75 hover:text-[#ed5a52]" data-testid="button-header-demo">Book a demo</button>
           <CTA onClick={onTrial} variant="coral" testId="button-header-trial" className="px-4 py-2.5 text-xs">Start free trial</CTA>
         </div>
         <button onClick={() => setMenuOpen(!menuOpen)} className="focus-ring rounded-full border border-[#292328]/15 p-2 md:hidden" aria-label="Toggle menu" data-testid="button-mobile-menu">{menuOpen ? <X size={18} /> : <Menu size={18} />}</button>
@@ -589,7 +723,7 @@ function SiteHeader({ onTrial, onDemo }: { onTrial: () => void; onDemo: () => vo
           {topNav.map((item) => <a href={homeHash(item.href)} onClick={closeMenus} key={item.href} className="border-b border-[#292328]/10 py-3 text-sm font-semibold" data-testid={`link-mobile-${item.label.toLowerCase().replaceAll(' ', '-')}`}>{item.label}</a>)}
         </nav>
         <div className="grid grid-cols-2 gap-2 pt-4">
-          <button onClick={() => { closeMenus(); onDemo(); }} className="rounded-full border border-[#292328]/20 px-3 py-3 text-xs font-bold" data-testid="button-mobile-login">Log in</button>
+          <button onClick={() => { closeMenus(); onDemo(); }} className="rounded-full border border-[#292328]/20 px-3 py-3 text-xs font-bold" data-testid="button-mobile-demo">Book a demo</button>
           <button onClick={() => { closeMenus(); onTrial(); }} className="rounded-full bg-[#ed5a52] px-3 py-3 text-xs font-bold text-white" data-testid="button-mobile-trial">Start free trial</button>
         </div>
       </div>}
@@ -601,18 +735,11 @@ function BusinessTypePage({ businessItem, group }: { businessItem: BusinessItem;
   const [modal, setModal] = useState<ModalMode>(null);
   const content = businessPageContent[businessItem.slug];
   const related = group.items.filter((item) => item.slug !== businessItem.slug).slice(0, 4);
-
-  useEffect(() => {
-    const previousTitle = document.title;
-    const descriptionTag = document.querySelector('meta[name="description"]');
-    const previousDescription = descriptionTag?.getAttribute('content');
-    document.title = `${businessItem.label} software | MUSE`;
-    descriptionTag?.setAttribute('content', content.description);
-    return () => {
-      document.title = previousTitle;
-      if (previousDescription) descriptionTag?.setAttribute('content', previousDescription);
-    };
-  }, [businessItem.label, content.description]);
+  usePageMetadata({
+    title: `${businessItem.label} software | MUSE`,
+    description: content.description,
+    path: businessRoute(businessItem.slug),
+  });
 
   const trial = () => setModal('trial');
   const demo = () => setModal('demo');
@@ -632,7 +759,7 @@ function BusinessTypePage({ businessItem, group }: { businessItem: BusinessItem;
                 <h1 className="serif mx-auto mt-5 max-w-[920px] text-[3.4rem] leading-[.88] tracking-[-.035em] sm:text-[5.4rem] lg:text-[6.7rem]">{content.title}</h1>
                 <div className="mt-8 flex flex-wrap justify-center gap-3">
                   <CTA onClick={trial} variant="dark" testId="button-business-trial">Start free trial <ArrowRight size={16} /></CTA>
-                  <button onClick={demo} className="focus-ring inline-flex items-center gap-2 rounded-full border border-white/50 px-5 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-[#292328]" data-testid="button-business-demo">Talk to sales <ArrowUpRight size={16} /></button>
+                  <button onClick={demo} className="focus-ring inline-flex items-center gap-2 rounded-full border border-white/50 px-5 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-[#292328]" data-testid="button-business-demo">Book a demo <ArrowUpRight size={16} /></button>
                 </div>
               </div>
             </Reveal>
@@ -700,10 +827,10 @@ function LandingHeader({ onTrial, onDemo }: { onTrial: () => void; onDemo: () =>
   return <header className="landing-header sticky top-0 z-30">
     <div className="mx-auto flex max-w-[1240px] items-center justify-between px-5 py-3.5 sm:px-8">
       <LandingLogo />
-      <nav className="hidden items-center gap-7 text-xs font-bold md:flex" aria-label="Main navigation">{links.map(([href, label]) => <a href={href} className="landing-link focus-ring" key={href} data-testid={`link-landing-${label.toLowerCase()}`}>{label}</a>)}<button onClick={onDemo} className="landing-link focus-ring" data-testid="button-landing-login">Log in</button><button onClick={onTrial} className="landing-button landing-button-ink px-4 py-2.5" data-testid="button-landing-trial">Start free trial</button></nav>
+      <nav className="hidden items-center gap-7 text-xs font-bold md:flex" aria-label="Main navigation">{links.map(([href, label]) => <a href={href} className="landing-link focus-ring" key={href} data-testid={`link-landing-${label.toLowerCase()}`}>{label}</a>)}<button onClick={onDemo} className="landing-link focus-ring" data-testid="button-landing-demo">Book a demo</button><button onClick={onTrial} className="landing-button landing-button-ink px-4 py-2.5" data-testid="button-landing-trial">Start free trial</button></nav>
       <button onClick={() => setMenuOpen(!menuOpen)} className="focus-ring rounded-full border border-[#171422]/20 p-2 md:hidden" aria-label="Toggle navigation" aria-expanded={menuOpen} data-testid="button-landing-menu">{menuOpen ? <X size={17} /> : <Menu size={17} />}</button>
     </div>
-    {menuOpen && <div className="landing-menu px-5 pb-5 md:hidden" data-testid="menu-landing-mobile"><nav className="flex flex-col">{links.map(([href, label]) => <a href={href} onClick={() => setMenuOpen(false)} className="landing-link border-b border-[#171422]/10 py-3 text-sm font-bold" key={href} data-testid={`link-mobile-landing-${label.toLowerCase()}`}>{label}</a>)}</nav><div className="grid grid-cols-2 gap-2 pt-4"><button onClick={() => { setMenuOpen(false); onDemo(); }} className="landing-button landing-button-outline" data-testid="button-mobile-landing-login">Log in</button><button onClick={() => { setMenuOpen(false); onTrial(); }} className="landing-button landing-button-ink" data-testid="button-mobile-landing-trial">Start free trial</button></div></div>}
+    {menuOpen && <div className="landing-menu px-5 pb-5 md:hidden" data-testid="menu-landing-mobile"><nav className="flex flex-col">{links.map(([href, label]) => <a href={href} onClick={() => setMenuOpen(false)} className="landing-link border-b border-[#171422]/10 py-3 text-sm font-bold" key={href} data-testid={`link-mobile-landing-${label.toLowerCase()}`}>{label}</a>)}</nav><div className="grid grid-cols-2 gap-2 pt-4"><button onClick={() => { setMenuOpen(false); onDemo(); }} className="landing-button landing-button-outline" data-testid="button-mobile-landing-demo">Book a demo</button><button onClick={() => { setMenuOpen(false); onTrial(); }} className="landing-button landing-button-ink" data-testid="button-mobile-landing-trial">Start free trial</button></div></div>}
   </header>;
 }
 
@@ -726,6 +853,7 @@ function LandingFeatureCard({ icon: Icon, number, title, copy, href }: { icon: t
 
 function HomePage() {
   const [modal, setModal] = useState<ModalMode>(null);
+  usePageMetadata(homeMetadata);
   const [openFaq, setOpenFaq] = useState(0);
   const [annual, setAnnual] = useState(false);
   const trial = () => setModal('trial');
